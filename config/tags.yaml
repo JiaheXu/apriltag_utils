@@ -1,0 +1,7 @@
+# Detect only AprilTag tag36h11, ID 1.
+family: tag36h11
+tags:
+  # Measure the outer BLACK square edge, excluding the surrounding white margin.
+  # Each physical tag should have a unique ID. Unlisted IDs are ignored.
+  - id: 1
+    length_mm: 60.0

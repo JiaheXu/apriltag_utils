@@ -1,0 +1,6 @@
+include package.xml README.md LICENSE setup.cfg requirements.txt
+recursive-include resource *
+recursive-include config *.yaml
+recursive-include launch *.py
+recursive-include test *.py
+recursive-include test/data *.png *.md

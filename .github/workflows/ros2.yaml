@@ -1,0 +1,43 @@
+name: ROS 2 tests
+
+on: [push, pull_request]
+
+jobs:
+  ros2:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: humble
+            image: ros:humble-ros-base-jammy
+          - distro: jazzy
+            image: ros:jazzy-ros-base-noble
+    container: ${{ matrix.image }}
+    env:
+      ROS_DOMAIN_ID: '42'
+      ROS_LOCALHOST_ONLY: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src/apriltag_utils
+      - name: Install dependencies
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y python3-colcon-common-extensions python3-pytest python3-rosdep python3-venv
+          test -f /etc/ros/rosdep/sources.list.d/20-default.list || rosdep init
+          rosdep update --rosdistro ${{ matrix.distro }}
+          rosdep install --from-paths src --ignore-src -r -y --rosdistro ${{ matrix.distro }}
+          python3 -m venv --system-site-packages /opt/apriltag-venv
+          /opt/apriltag-venv/bin/python -m pip install --no-deps -r src/apriltag_utils/requirements.txt
+      - name: Build, test, and verify installation
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.distro }}/setup.bash
+          source /opt/apriltag-venv/bin/activate
+          python /usr/bin/colcon build --packages-select apriltag_utils --symlink-install
+          source install/setup.bash
+          python /usr/bin/colcon test --packages-select apriltag_utils --event-handlers console_direct+
+          python /usr/bin/colcon test-result --verbose
+          ros2 launch apriltag_utils apriltag.launch.py --show-args
